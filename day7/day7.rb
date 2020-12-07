@@ -6,6 +6,10 @@ class BagType
   attr_reader :name
   attr_accessor :contents, :containers
 
+  def to_s
+    @name
+  end
+
   def initialize(name)
     @name = name
     @contents = []
@@ -26,6 +30,7 @@ class BagType
 
     if bag_type.contents.empty?
       contained_type_names.each do |type_name_arr|
+        bag_count = type_name_arr[0].to_i
         type_name = type_name_arr[1]
         contained_bag_type = defined_types[type_name]
 
@@ -35,7 +40,10 @@ class BagType
         end
 
         contained_bag_type.containers << bag_type if contained_bag_type.containers.select { |item| item.name == self.name }
-        bag_type.contents << contained_bag_type
+
+        (1..bag_count).each do
+          bag_type.contents << contained_bag_type
+        end
       end
     end
 
@@ -51,14 +59,22 @@ end
 
 def walk_up(top_level, bag_type)
   bag_type.containers.each do |container|
-    top_level << container.name
+    top_level << container
     walk_up(top_level, container)
+  end
+end
+
+def count_bags(bag_types)
+  bag_types.inject(0) do |count, bag_type|
+    count += 1 + count_bags(bag_type.contents)
+    count
   end
 end
 
 gold = bag_types['shiny gold']
 top_level = Set.new
 walk_up(top_level, gold)
+total_bags = count_bags(gold.contents)
 
-puts top_level.length
-puts top_level
+puts "bags types containing 'shiny gold' bags: #{top_level.length}"
+puts "total bags contained by a 'shiny gold' bag: #{total_bags}"
