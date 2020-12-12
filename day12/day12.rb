@@ -15,8 +15,40 @@ input = File.readlines(ARGV[0]).map(&:strip).reject(&:empty?).map do |line|
   [matches[1], matches[2]]
 end
 
-orientation = 90
+def reorient_waypoint(units, waypoint_offset)
+  x = waypoint_offset[0]
+  y = waypoint_offset[1]
+
+  if units.negative?
+    case units.abs
+    when 90
+      [-y, x]
+    when 180
+      [-x, -y]
+    when 270
+      [y, -x]
+    when 360
+      [x, y]
+    end
+  else
+    case units.abs
+    when 90
+      [y, -x]
+    when 180
+      [-x, -y]
+    when 270
+      [-y, x]
+    when 360
+      [x, y]
+    end
+  end
+end
+
+waypoint_offset = [10, 1]
+waypoint_pos = [10, 1]
 pos = [0, 0]
+
+puts "\t\tpos: #{pos}, waypoint_pos: #{waypoint_pos},  waypoint_offset: #{waypoint_offset}"
 
 input.each do |command|
   op = command[0]
@@ -25,44 +57,36 @@ input.each do |command|
   puts "op: #{op}, units: #{units}"
   case op
   when 'N'
-    pos[1] += units
+    waypoint_offset[1] += units
   when 'S'
-    pos[1] -= units
+    waypoint_offset[1] -= units
   when 'E'
-    pos[0] += units
+    waypoint_offset[0] += units
   when 'W'
-    pos[0] -= units
+    waypoint_offset[0] -= units
   when 'L'
-    orientation -= units
-    if orientation.negative?
-      orientation = 360 + orientation
-    end
+    waypoint_offset = reorient_waypoint(-units, waypoint_offset)
+    waypoint_pos[0] = pos[0] + waypoint_offset[0]
+    waypoint_pos[1] = pos[1] + waypoint_offset[1]
   when 'R'
-    orientation += units
-    if orientation >= 360
-      orientation -= 360
-    end
+    waypoint_offset = reorient_waypoint(units, waypoint_offset)
+    waypoint_pos[0] = pos[0] + waypoint_offset[0]
+    waypoint_pos[1] = pos[1] + waypoint_offset[1]
   when 'F'
-    case orientation
-    when 0
-      pos[1] += units
-    when 180
-      pos[1] -= units
-    when 90
-      pos[0] += units
-    when 270
-      pos[0] -= units
-    end
+    pos[0] += waypoint_offset[0] * units
+    pos[1] += waypoint_offset[1] * units
+
+    waypoint_pos[0] = pos[0] + waypoint_offset[0]
+    waypoint_pos[1] = pos[1] + waypoint_offset[1]
   else
     puts "bad input"
   end
 
-  puts "\t\tpos: #{pos}, orientation: #{orientation}"
+  puts "\t\tpos: #{pos}, waypoint_pos: #{waypoint_pos},  waypoint_offset: #{waypoint_offset}"
 end
 
 x_abs = pos[0].abs
 y_abs = pos[1].abs
 
-puts "orientation: #{orientation}"
 puts "pos: (#{x_abs}, #{y_abs})"
 puts "Manhattan distance: #{x_abs + y_abs}"
