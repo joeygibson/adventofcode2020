@@ -42,7 +42,7 @@ def extended_gcd(a, b)
     x, last_x = last_x - quotient * x, x
     y, last_y = last_y - quotient * y, y
   end
-  return last_remainder, last_x * (a < 0 ? -1 : 1)
+  return last_remainder, last_x * (a.negative? ? -1 : 1)
 end
 
 def invmod(e, et)
@@ -50,6 +50,7 @@ def invmod(e, et)
   if g != 1
     raise 'Multiplicative inverse modulo does not exist!'
   end
+
   x % et
 end
 
@@ -68,9 +69,36 @@ remainders = []
 
 buses.each_with_index do |bus, idx|
   next if bus.nil?
+
   mods << bus
   remainders << (-1 * idx) % bus
 end
 
 puts chinese_remainder(mods, remainders)
+
+## part 2 again
+# translated from a Python example at https://old.reddit.com/r/adventofcode/comments/kc4njx/2020_day_13_solutions/gfnjgl4/
+
+buses = input[1].split(/,/).map { |bus| bus == 'x' ? nil : bus.to_i }
+bus_time_offsets = buses.map.with_index { |bus, idx| [bus, idx] }
+                        .reject { |bus_with_idx| bus_with_idx[0].nil? }
+
+puts "buses: #{bus_time_offsets}"
+
+pos = 0
+incr = bus_time_offsets[0][0]
+
+bus_time_offsets.drop(1).each do |bto|
+  bus_time = bto[0]
+  bus_offset = bto[1]
+
+  loop do
+    pos += incr
+    break if ((pos + bus_offset) % bus_time).zero?
+  end
+
+  incr *= bus_time
+end
+
+puts "pos: #{pos}"
 
