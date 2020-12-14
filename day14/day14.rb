@@ -1,8 +1,47 @@
 #!/usr/bin/env ruby
 
+require 'matrix'
+
 if ARGV.length != 1
   puts 'Usage: day14.rb <input file>'
   exit(1)
+end
+
+def map_addresses(original_address, mask)
+  bits = original_address.to_i.to_s(2).rjust(36, '0').split(//)
+
+  x_count = mask.count { |m| m == 'X' }
+  x_exp = 2**x_count
+
+  xs_seen = 0
+
+  new_addresses = mask.zip(bits).map do |m_b|
+    m = m_b[0]
+    b = m_b[1]
+    case m
+    when '0'
+      Array.new(x_exp, b)
+    when '1'
+      Array.new(x_exp, '1')
+    when 'X'
+      xs_seen += 1
+      grouping = x_exp >> xs_seen
+
+      grp = [0, 1].flat_map do |i|
+        Array.new(grouping, i)
+      end
+
+      grp * (2**(xs_seen - 1))
+    end
+  end
+
+  m = Matrix.rows(new_addresses)
+
+  new_addresses[0].length.times.map do |idx|
+    # s = m.column(idx).to_a.join('')
+    # puts "m: #{s} = #{s.to_i(2)}"
+    m.column(idx).to_a.join('').to_i(2)
+  end
 end
 
 memory = Hash.new(0)
@@ -18,37 +57,26 @@ input.each do |line|
     next
   end
 
-  matches = line.match(/^(mem\[\d+\])\s*=\s*(\d+)$/)
+  matches = line.match(/^mem\[(\d+)\]\s*=\s*(\d+)$/)
   unless matches
     puts "Invalid input: #{line}"
     next
   end
 
   address = matches[1]
-  value = matches[2].to_i.to_s(2).rjust(36, '0').split(//)
 
-  contents = memory[address].to_s(2).rjust(36, '0').split(//)
+  addresses_to_write = map_addresses(address, mask)
 
-  mvc = mask.zip(value, contents)
+  value = matches[2].to_i
 
-  new_contents = mvc.map do |(m, v, c)|
-    case m
-    when 'X'
-      v
-    when '0'
-      0
-    when '1'
-      1
-    end
+  addresses_to_write.each do |address|
+    memory[address] = value
   end
-
-  puts "new_contents: #{new_contents.join('')}"
-  memory[address] = new_contents.join('').to_i(2)
 end
 
-memory.each do |address|
-  puts "address: #{address}"
-end
+# memory.each do |address|
+#   puts "address: #{address}"
+# end
 
 total = memory.values.inject(0) do |acc, value|
   acc + value
