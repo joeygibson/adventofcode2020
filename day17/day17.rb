@@ -5,96 +5,59 @@ if ARGV.length != 1
   exit(1)
 end
 
-class Cube
-  def self.new_active(x, y, z)
-    Cube.new('#', x, y, z)
-  end
+input = File.readlines(ARGV[0]).map(&:strip).reject(&:empty?).map { |line| line.split(//) }
 
-  def self.new_inactive
-    Cube.new('.', x, y, z)
-  end
+board = {}
 
-  def initialize(state, x, y, z)
-    @x = x
-    @y = y
-    @z = z
-    @active = state == '#'
-  end
-
-  def flip
-    @active = !@active
-  end
-
-  def is_active
-    @active
-  end
-
-  def to_s
-    if @active
-      '#'
-    else
-      '.'
-    end
+input.each_with_index do |row, r_idx|
+  row.each_with_index do |state, c_idx|
+    board[[c_idx, r_idx, 0]] = state == '#'
   end
 end
 
-class Layer
-  def initialize(z, arr)
-    @z = z
-    @cubes = arr.map.with_index do |cells, x|
-      cells.map.with_index do |state, y|
-        Cube.new(state, x, y, z)
+def get_neighbors(board, col, row, layer)
+  neighbors = {}
+
+  (col - 1..col + 1).each do |c_idx|
+    (row - 1..row + 1).each do |r_idx|
+      (layer - 1..layer + 1).each do |z_idx|
+        new_coord = [c_idx, r_idx, z_idx]
+        neighbors[new_coord] = board[new_coord] || false if new_coord != [col, row, layer]
       end
     end
   end
 
-  def expand
-    @cubes.each.with_index do |row, y|
-      row.prepend(Cube.new_inactive, row.first.x - 1, y, @z)
-      row.append(Cube.new_inactive, row.first.x - 1, y, @z)
-    end
-
-    row_length = @cubes[0].length - 1
-
-    @cubes.prepend((0..row_length).map { |_| Cube.new_inactive })
-    @cubes.append((0..row_length).map { |_| Cube.new_inactive })
-  end
-
-  def print
-    @cubes.each do |row|
-      puts row.join('').to_s
-    end
-  end
-
-  def get_neighbor_coordinates
-
-  end
+  neighbors
 end
 
-class Board
-  def initialize(first_layer)
-    @layers = {}
-    @layers[0] = first_layer
-  end
+def turn(board)
+  new_board = {}
 
-  def print
-    @layers.sort.each do |level, layer|
-      puts "layer = #{level}"
-      layer.print
-      puts '-' * 40
+  board.each do |coords, active|
+    col, row, layer = coords
+    neighbors = get_neighbors(board, col, row, layer)
+    active_neighbors = neighbors.values.count do |state|
+      state
+    end
+
+    new_board[coords] = if active
+                          [2, 3].include?(active_neighbors)
+                        else
+                          active_neighbors == 3
+                        end
+
+    neighbors.each do |neighbor, state|
+      new_board[neighbor] = state if new_board[neighbor].nil?
     end
   end
 
-  def get_neighbors() end
+  new_board
 end
 
-input = File.readlines(ARGV[0]).map(&:strip).reject(&:empty?).map { |line| line.split(//) }
+puts "initial state, active: #{board.count { |k, v| v }}"
 
-layer = Layer.new(input)
-board = Board.new(layer)
-
-board.print
-
-layer.expand
-board.print
-
+6.times do |iteration|
+  board = turn(board)
+  puts "iteration: #{iteration}, active: #{board.count { |k, v| v }}"
+  # puts board
+end
