@@ -7,7 +7,18 @@ end
 
 input = File.readlines(ARGV[0]).map(&:strip).reject(&:empty?).map { |line| line.split(//) }
 
-board = {}
+dim = input[0].length
+
+board = Hash.new { false }
+
+(-1..dim).each do |c_idx|
+  (-1..dim).each do |r_idx|
+    (-1..1).each do |z_idx|
+      coord = [c_idx, r_idx, z_idx]
+      board[coord] = false
+    end
+  end
+end
 
 input.each_with_index do |row, r_idx|
   row.each_with_index do |state, c_idx|
