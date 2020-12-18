@@ -28,6 +28,8 @@ class Int < Expr
 end
 
 class BinaryExpr < Expr
+  attr_accessor :left, :right
+
   def initialize(left, right)
     @left = left
     @right = right
@@ -54,6 +56,16 @@ class Mul < BinaryExpr
   end
 end
 
+class Paren < Expr
+  def initialize(value)
+    @value = value
+  end
+
+  def evaluate
+    @value.evaluate
+  end
+end
+
 class Parser
   def initialize(str)
     @buffer = StringScanner.new(str.strip)
@@ -67,7 +79,20 @@ class Parser
 
   def combine_with_op(left, op, right)
     if op == '+'
-      Add.new(left, right)
+      if left.class == Int
+        Add.new(left, right)
+      elsif left.class == Paren
+        Add.new(left, right)
+      else
+        left.right = Add.new(left.right, right)
+        left
+      end
+      # if left.class != Int && left.class != Paren
+      #   left.right = Add.new(left.right, right)
+      #   left
+      # else
+      #   Add.new(left, right)
+      # end
     else
       Mul.new(left, right)
     end
@@ -98,28 +123,19 @@ class Parser
         op = @buffer.getch
       when '*'
         op = @buffer.getch
-        if next_op == '+'
-          right = parse
-
-          if left != nil && right != nil
-            left = combine_with_op(left, op, right)
-            op = nil
-            right = nil
-          end
-        end
       when /\(/
         @buffer.getch
         if left == nil
-          left = parse
+          left = Paren.new(parse)
         else
-          right = parse
+          right = Paren.new(parse)
         end
 
         if op != nil && left != nil && right != nil
           left = combine_with_op(left, op, right)
-          op = nil
-          right = nil
         end
+        op = nil
+        right = nil
       when /\)/
         @buffer.getch
         if right == nil
