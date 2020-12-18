@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 if ARGV.length != 1
-  puts 'Usage: day167rb <input file>'
+  puts "Usage: #{__FILE__} <input file>"
   exit(1)
 end
 
