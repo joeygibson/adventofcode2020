@@ -73,6 +73,10 @@ class Parser
     end
   end
 
+  def next_op
+    @buffer.captures[0] if @buffer.check(/\s*\d+\s*([+*])/)
+  end
+
   def parse()
     left = nil
     op = nil
@@ -94,6 +98,15 @@ class Parser
         op = @buffer.getch
       when '*'
         op = @buffer.getch
+        if next_op == '+'
+          right = parse
+
+          if left != nil && right != nil
+            left = combine_with_op(left, op, right)
+            op = nil
+            right = nil
+          end
+        end
       when /\(/
         @buffer.getch
         if left == nil
