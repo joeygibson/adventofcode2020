@@ -43,7 +43,12 @@ until all_mapped(rules)
       rv =~ /\b#{k}\b/
     end
 
+    next if references.empty?
+
     references.each do |rk, rv|
+      if rk == "8" || rk == "11" || rk == k
+        puts "cycle"
+      end
       value = if v =~ /\|/
                 rv.gsub(/\b#{k}\b/, "(#{v})")
               else
