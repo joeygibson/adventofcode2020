@@ -27,10 +27,18 @@ end
 puts "rules built: #{rules.length}"
 
 mapped_count = 0
+unmapped = []
 
 until all_mapped(rules)
   mapped = rules.reject { |_, v| v =~ /\d/ }
-  unmapped = rules.select { |_, v| v =~ /\d/ }
+  unmapped1 = rules.select { |_, v| v =~ /\d/ }
+
+  if unmapped == unmapped1
+    # puts "unmapped: #{unmapped}"
+    # puts "unmapped1: #{unmapped1}"
+    break
+  end
+  unmapped = unmapped1
 
   len = mapped.length
   if len != mapped_count
@@ -61,13 +69,27 @@ until all_mapped(rules)
 end
 
 puts "rules mapped: #{rules.length}"
+puts "rules unmapped: #{unmapped.length}"
+puts "unmapped: #{unmapped}"
+
+# handle recursive rules
+rule = rules['8']
+rule = rule.sub('8', '').prepend('(?<zzz>') << ')\g<zzz>'
+rules['8'] = rule
+
+rule = rules['11']
+rule = rule.sub('11', ')\g<xxx>\g<yyy>(?<yyy>').prepend('(?<xxx>') << ')'
+rules['11'] = rule
+
+rule = "#{rules['8']} #{rules['11']}"
+rules['0'] = rule
 
 rules.each do |k, v|
   value = v.gsub(' ', '')
   rules[k] = value
 end
 
-puts "rules: #{rules}"
+# puts "rules: #{rules}"
 
 rule = rules['0']
 
@@ -75,6 +97,6 @@ matches = messages.select do |message|
   message =~ /^#{rule}$/
 end
 
-puts "matches: #{matches}"
+# puts "matches: #{matches}"
 puts "matches: #{matches.length}"
 
