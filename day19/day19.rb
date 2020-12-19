@@ -9,10 +9,6 @@ def all_mapped(rules)
   rules.values.none? { |rule| rule =~ /\d/ }
 end
 
-def is_mapped(rule)
-  rule !~ /\d/
-end
-
 input = File.readlines(ARGV[0]).map(&:strip)
 
 rule_descriptions = input.take_while { |line| !line.empty? }
@@ -30,34 +26,31 @@ end
 
 puts "rules built: #{rules.length}"
 
-unmapped_count = 0
+mapped_count = 0
 
 until all_mapped(rules)
-  unmapped = rules.select { |k, v| v =~ /\d/ }
+  mapped = rules.reject { |_, v| v =~ /\d/ }
+  unmapped = rules.select { |_, v| v =~ /\d/ }
 
-  len = unmapped.length
-  if len != unmapped_count
-    puts "unmapped rules: #{len}"
-    unmapped_count = len
+  len = mapped.length
+  if len != mapped_count
+    puts "mapped rules: #{len}"
+    mapped_count = len
   end
 
-  unmapped.each do |k, v|
-    value = v.clone
-    numbers = v.scan /\d/
-    numbers.each do |num|
-      ref_rule = rules[num]
-      next unless is_mapped(ref_rule)
-
-      value = if ref_rule =~ /\|/
-                value.gsub(num, "(#{ref_rule})")
-              else
-                value.gsub(num, ref_rule)
-              end
+  mapped.each do |k, v|
+    references = rules.select do |_, rv|
+      rv =~ /\b#{k}\b/
     end
 
-    if value != v
-      puts "MAPPED"
-      rules[k] = value
+    references.each do |rk, rv|
+      value = if v =~ /\|/
+                rv.gsub(/\b#{k}\b/, "(#{v})")
+              else
+                rv.gsub(/\b#{k}\b/, v)
+              end
+
+      rules[rk] = value
     end
   end
 end
@@ -78,6 +71,5 @@ matches = messages.select do |message|
 end
 
 puts "matches: #{matches}"
-
 puts "matches: #{matches.length}"
 
