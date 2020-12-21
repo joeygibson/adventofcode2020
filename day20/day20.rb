@@ -59,7 +59,6 @@ ue1.each_key do |edge|
   edges.each do |tile_id, tile_edges|
     tile_edges.each_value do |tile_edge|
       if tile_edge == edge
-        # puts "#{tile_id}" #, #{edge}"
         matches[tile_id] += 1
       end
     end
@@ -73,3 +72,15 @@ end
 res = m.keys.map(&:to_i).inject(1) {|acc, e| acc * e}
 
 puts "#{res}"
+
+connected_edges = {}
+
+edges.map do |tile_id, tile_edges|
+  te = tile_edges.reject do |dir, edge|
+    ue1.member?(edge)
+  end
+
+  connected_edges[tile_id] = te
+end
+
+puts "conn: #{connected_edges}"
