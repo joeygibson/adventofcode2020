@@ -15,20 +15,40 @@ player2 = input.drop(player1.length + 2).map do |line|
   line.to_i
 end
 
-if player1.length != player2.length
-  puts "wrong deck counts! #{player1.length} != #{player2.length}"
-  exit 2
-end
+# if player1.length != player2.length
+#   puts "wrong deck counts! #{player1.length} != #{player2.length}"
+#   exit 2
+# end
 
 def combat(player1, player2)
+  history = Hash.new { 0 }
+
   until player1.length.zero? || player2.length.zero?
+    state = [player1, player2]
+
+    if !history[state].zero?
+      player2 = []
+      break
+    else
+      history[state] = 1
+    end
+
     card1 = player1[0]
     card2 = player2[0]
 
     player1 = player1.drop(1)
     player2 = player2.drop(1)
 
-    if card1 > card2
+    winner = if player1.length >= card1 && player2.length >= card2
+               # recurse!
+               winner, = combat(player1.clone.take(card1), player2.clone.take(card2))
+               winner
+             elsif card1 > card2
+               :player1
+             else
+               :player2
+             end
+    if winner == :player1
       player1 << card1
       player1 << card2
     else
@@ -38,14 +58,16 @@ def combat(player1, player2)
   end
 
   if player1.length.zero?
-    player2
+    [:player2, player2]
   else
-    player1
+    [:player1, player1]
   end
 end
 
-winner = combat(player1, player2)
-res = winner.reverse.each_with_index.inject(0) do |acc, (num, idx)|
+winner, deck = combat(player1, player2)
+
+puts "winner: #{winner} deck: #{deck}"
+res = deck.reverse.each_with_index.inject(0) do |acc, (num, idx)|
   acc + num * (idx + 1)
 end
 
