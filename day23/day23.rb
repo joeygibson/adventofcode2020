@@ -8,10 +8,6 @@ class Node
     @next_node = nil
   end
 
-  # def <=>(other)
-  #   @value <=> other.value
-  # end
-
   def ==(other)
     @value == other.value
   end
@@ -40,16 +36,6 @@ def to_linked_list(arr)
   [head, all_nodes]
 end
 
-def print_10(node)
-  puts '-' * 80
-  puts node.value.to_s
-
-  10.times do |nn|
-    node = node.next_node
-    puts node.value.to_s
-  end
-end
-
 if ARGV.length != 2
   puts "Usage: #{__FILE__} <input file> <number of moves>"
   exit(1)
@@ -68,9 +54,7 @@ max_value = input.max
 orig_head, all_nodes = to_linked_list(input)
 head = orig_head
 
-total_moves = 0
 number_of_moves.times do |move|
-  total_moves += 1
   puts "Move: #{move}" if (move % 100_000).zero?
 
   to_move = [head.next_node, head.next_node.next_node, head.next_node.next_node.next_node]
@@ -93,7 +77,6 @@ number_of_moves.times do |move|
     dest = max_value if dest < min_value
   end
 
-  # puts "dest: #{dest}"
   dest_node = all_nodes[dest]
   after = dest_node.next_node
   dest_node.next_node = to_move[0]
@@ -106,7 +89,6 @@ number_of_moves.times do |move|
   head = next_node
 end
 
-puts "total: #{total_moves}"
 one = all_nodes[1]
 
 n = one.next_node.value
