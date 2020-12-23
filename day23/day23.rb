@@ -28,17 +28,14 @@ number_of_moves.times do
     input[idx]
   end
 
-  # if input == [4, 1, 5, 8, 3, 9, 2, 6, 7]
-  #   # [4, 1, 3, 6, 7, 9, 2, 5, 8]
-  #   puts "fuck"
-  # end
-
   orig_input = input.clone
   input = input.reject.with_index { |_, idx| indexes.include?(idx) }
 
   dest = if current - 1 < min_value
+           puts "current - 1 = #{current - 1}"
            max_value
          else
+           puts "current = #{current}"
            current - 1
          end
 
@@ -57,7 +54,7 @@ number_of_moves.times do
         else
           pos + 1
         end
-  pos = 0 if pos > input.length
+  pos = 0 if pos >= input.length
 end
 
 puts "final: #{input}"
