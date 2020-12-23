@@ -1,5 +1,55 @@
 #!/usr/bin/env ruby
 
+class Node
+  attr_accessor :value, :next_node
+
+  def initialize(value)
+    @value = value
+    @next_node = nil
+  end
+
+  # def <=>(other)
+  #   @value <=> other.value
+  # end
+
+  def ==(other)
+    @value == other.value
+  end
+
+  def to_s
+    @value.to_s
+  end
+end
+
+def to_linked_list(arr)
+  all_nodes = {}
+
+  head = Node.new(arr[0])
+  prev = head
+
+  all_nodes[arr[0]] = head
+
+  (1...arr.length).each do |idx|
+    next_node = Node.new(arr[idx])
+    all_nodes[arr[idx]] = next_node
+    prev.next_node = next_node
+    prev = next_node
+  end
+
+  prev.next_node = head
+  [head, all_nodes]
+end
+
+def print_10(node)
+  puts '-' * 80
+  puts node.value.to_s
+
+  10.times do |nn|
+    node = node.next_node
+    puts node.value.to_s
+  end
+end
+
 if ARGV.length != 2
   puts "Usage: #{__FILE__} <input file> <number of moves>"
   exit(1)
@@ -8,72 +58,60 @@ end
 input = File.readlines(ARGV[0]).map(&:strip)[0].split(//).map(&:to_i)
 
 number_of_moves = ARGV[1].to_i
-pos = 0
+
+max_value = input.max
+input += (max_value + 1..1_000_000).to_a
+
 min_value = input.min
 max_value = input.max
 
-number_of_moves.times do
-  current = input[pos]
-  start = pos + 1
-  stop = pos + 3
-  indexes = *(start..stop).map do |idx|
-    if idx >= input.length
-      idx - input.length
-    else
-      idx
-    end
+orig_head, all_nodes = to_linked_list(input)
+head = orig_head
+
+total_moves = 0
+number_of_moves.times do |move|
+  total_moves += 1
+  puts "Move: #{move}" if (move % 100_000).zero?
+
+  to_move = [head.next_node, head.next_node.next_node, head.next_node.next_node.next_node]
+  next_node = head.next_node.next_node.next_node.next_node
+
+  head.next_node = next_node
+
+  to_move.each do |node|
+    all_nodes.delete(node.value)
   end
 
-  next_three = indexes.map do |idx|
-    input[idx]
-  end
-
-  orig_input = input.clone
-  input = input.reject.with_index { |_, idx| indexes.include?(idx) }
-
-  dest = if current - 1 < min_value
-           puts "current - 1 = #{current - 1}"
+  dest = if head.value - 1 < min_value
            max_value
          else
-           puts "current = #{current}"
-           current - 1
+           head.value - 1
          end
 
-  while next_three.include?(dest)
+  while to_move.include?(Node.new(dest))
     dest -= 1
     dest = max_value if dest < min_value
   end
 
-  dest_idx = input.index { |cup| cup == dest }
+  # puts "dest: #{dest}"
+  dest_node = all_nodes[dest]
+  after = dest_node.next_node
+  dest_node.next_node = to_move[0]
+  to_move[2].next_node = after
 
-  puts "input: #{orig_input}, pos: #{pos}, current: #{current}, next_three: #{next_three}, dest: #{dest}, dest_idx: #{dest_idx}"
-
-  input.insert(dest_idx + 1, *next_three)
-  pos = if dest_idx < pos
-          pos + 4
-        else
-          pos + 1
-        end
-  pos = 0 if pos >= input.length
-end
-
-puts "final: #{input}"
-
-one_idx = input.index { |cup| cup == 1 }
-pos = one_idx + 1
-
-results = []
-
-while results.length < (input.length)
-  if pos > input.length
-    pos = 0
+  to_move.each do |node|
+    all_nodes[node.value] = node
   end
 
-  results << input[pos]
-  pos += 1
+  head = next_node
 end
 
-puts "res: #{results.join('')}"
+puts "total: #{total_moves}"
+one = all_nodes[1]
 
+n = one.next_node.value
+n1 = one.next_node.next_node.value
 
-
+puts "one: #{one}"
+puts "n: #{n}, n1: #{n1}"
+puts "res: #{n * n1}"
