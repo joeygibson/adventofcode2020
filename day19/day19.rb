@@ -70,16 +70,25 @@ end
 
 puts "rules mapped: #{rules.length}"
 puts "rules unmapped: #{unmapped.length}"
-puts "unmapped: #{unmapped}"
+# puts "unmapped: #{unmapped}"
 
 # handle recursive rules
-rule = rules['8']
-rule = rule.sub('8', '').prepend('(?<zzz>') << ')\g<zzz>'
-rules['8'] = rule
+rules['8'] = "(#{rules['42']})+"
+# rules['11'] = "(?<r>#{rules['42']}\\g<r>?#{rules['31']})"
+# rules['11'] = "(?<r>#{rules['42']} #{rules['31']}) | (#{rules['42']} \\g<r> #{rules['31']})"
+# rules['11'] = "(?<r>#{rules['42']} #{rules['31']}) | (#{rules['42']} \\g<r> #{rules['31']})"
+# puts "rule[11] = #{rules['11']}"
 
-rule = rules['11']
-rule = rule.sub('11', ')\g<xxx>\g<yyy>(?<yyy>').prepend('(?<xxx>') << ')'
-rules['11'] = rule
+rule_11 = []
+(1..20).each do |i|
+  rule_11 << "(#{rules['42']}){#{i}}(#{rules['31']}){#{i}}"
+end
+
+rule_11_text = "(#{rule_11.join(')|(')})"
+
+rules['11'] = "(?:#{rule_11_text})"
+
+puts "rule_11: #{rules['11']}"
 
 rule = "#{rules['8']} #{rules['11']}"
 rules['0'] = rule
@@ -89,14 +98,13 @@ rules.each do |k, v|
   rules[k] = value
 end
 
-# puts "rules: #{rules}"
-
 rule = rules['0']
+
+puts "rule: #{rule}\n\n"
 
 matches = messages.select do |message|
   message =~ /^#{rule}$/
 end
 
-# puts "matches: #{matches}"
-puts "matches: #{matches.length}"
+puts "rule matches: #{matches.length}"
 
