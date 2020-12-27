@@ -90,3 +90,6 @@ ing_count = all_ingredients.inject(0) do |acc, v|
 end
 
 puts "ing_count: #{ing_count}"
+
+res = allergens_found.sort_by {|key, value| key}.map {|arr| arr[1]}.join(',')
+puts "res: #{res}"
