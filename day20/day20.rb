@@ -27,8 +27,7 @@ def get_column(tile, col_idx)
   col.join('')
 end
 
-unique_edges = Hash.new {0}
-  #Set.new
+unique_edges = Hash.new { 0 }
 
 raw_edges = tiles.flat_map do |tile_id, tile|
   edges = {}
@@ -51,9 +50,9 @@ end
 
 edges = Hash[raw_edges.each_slice(2).to_a]
 
-ue1 = unique_edges.reject {|edge, count| count > 1}
+ue1 = unique_edges.reject { |_, count| count > 1 }
 
-matches = Hash.new {0}
+matches = Hash.new { 0 }
 
 ue1.each_key do |edge|
   edges.each do |tile_id, tile_edges|
@@ -65,11 +64,11 @@ ue1.each_key do |edge|
   end
 end
 
-m = matches.select do |k, v|
+m = matches.select do |_, v|
   v == 4
 end
 
-res = m.keys.map(&:to_i).inject(1) {|acc, e| acc * e}
+res = m.keys.map(&:to_i).inject(1) { |acc, e| acc * e }
 
 puts "#{res}"
 
