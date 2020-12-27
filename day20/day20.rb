@@ -61,6 +61,15 @@ class Tile
 
     Tile.new(@id, rows, @size)
   end
+
+  def remove_edges
+    rows = @rows[1..-2]
+    rows = rows.map do |row|
+      row[1..-2]
+    end
+
+    Tile.new(@id, rows, rows.length)
+  end
 end
 
 def rotations(tile)
@@ -149,3 +158,99 @@ corners = solved_grid[0][0].id, solved_grid[-1][0].id, solved_grid[0][-1].id, so
 
 part1 = corners.inject(1) { |acc, id| acc * id.to_i }
 puts "part1: #{part1}"
+
+trimmed_grid = solved_grid.map do |row|
+  row.map do |tile|
+    tile.remove_edges
+  end
+end
+
+def make_big_picture(grid)
+  big_picture_arr = grid.map do |row|
+    row_data = row.map do |tile|
+      tile.rows
+    end
+
+    row_string = ''
+    row_count = row_data[0].length
+
+    row_count.times do |idx|
+      row_data.each do |item|
+        row_string << item[idx]
+      end
+
+      row_string << "\n"
+    end
+
+    row_string
+  end
+
+  big_picture_arr.join('')
+end
+
+big_picture = make_big_picture(trimmed_grid)
+
+puts big_picture
+
+sea_monster = [
+  '                  # '.gsub(' ', '.'),
+  '#    ##    ##    ###'.gsub(' ', '.'),
+  ' #  #  #  #  #  #   '.gsub(' ', '.')
+]
+
+def find_monsters(picture, sea_monster)
+  first_hits = []
+
+  picture_strings = picture.split(/\n/)
+
+  (0...picture_strings.length).each do |row_idx|
+    row = picture_strings[row_idx]
+    if row =~ /#{sea_monster[0]}/ &&
+      picture_strings[row_idx + 1] =~ /#{sea_monster[1]}/ &&
+      picture_strings[row_idx + 2] =~ /#{sea_monster[2]}/
+      first_hits << row_idx
+    end
+  end
+
+  first_hits
+end
+
+def rotate_picture(picture)
+  split_data = picture.split(/\n/).map { |row| row.split(//) }
+
+  rotated_data = []
+  split_data.transpose.each do |x|
+    rotated_data << x.reverse.join('')
+  end
+
+  rotated_data.join("\n")
+end
+
+def flip(picture)
+  picture.split(/\n/).map(&:reverse).join("\n")
+end
+
+first_rot = rotate_picture(big_picture)
+second_rot = rotate_picture(first_rot)
+third_rot = rotate_picture(second_rot)
+
+rots = [big_picture, first_rot, second_rot, third_rot]
+all_variants = rots.flat_map do |picture|
+  flipped = flip(picture)
+  [picture, flipped]
+end
+
+all_hits = all_variants.flat_map do |picture|
+  monsters = find_monsters(picture, sea_monster)
+  puts "monsters: #{monsters}"
+
+  monsters
+end
+
+puts "hits: #{all_hits}"
+monster_size = 15
+
+total_hashes = big_picture.split(//).count { |item| item == '#' }
+
+puts "total_hashes: #{total_hashes}"
+puts "part 2: #{total_hashes - (monster_size * all_hits.length)}"
