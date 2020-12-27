@@ -7,79 +7,145 @@ if ARGV.length != 1
   exit(1)
 end
 
+class Tile
+  attr_reader :id, :rows, :size
+
+  def initialize(id, rows, size)
+    @id = id
+    @rows = rows
+    @size = size
+  end
+
+  def self.new_from_raw(raw_data)
+    lines = raw_data.split(/\n/).reject(&:empty?)
+    id = lines[0].match(/^Tile (\d+):/)[1]
+    rows = lines.drop(1).map(&:strip)
+    size = rows.length
+
+    Tile.new(id, rows, size)
+  end
+
+  def top
+    @rows[0]
+  end
+
+  def bottom
+    @rows[-1]
+  end
+
+  def left
+    @rows.map { |row| row[0] }.join('')
+  end
+
+  def right
+    @rows.map { |row| row[-1] }.join('')
+  end
+
+  def to_s
+    @rows.join("\n")
+  end
+
+  def rotate
+    split_data = @rows.map { |str| str.split(//) }
+
+    rotated_data = []
+    split_data.transpose.each do |x|
+      rotated_data << x.reverse.join('')
+    end
+
+    Tile.new(@id, rotated_data, rotated_data.length)
+  end
+
+  def flip
+    rows = @rows.map(&:reverse)
+
+    Tile.new(@id, rows, @size)
+  end
+end
+
+def rotations(tile)
+  first_rotation = tile.rotate
+  second_rotation = first_rotation.rotate
+  third_rotation = second_rotation.rotate
+
+  [tile, first_rotation, second_rotation, third_rotation]
+end
+
 big_chunks = File.read(ARGV[0]).split(/^\s*$/)
 
-raw_tiles = big_chunks.flat_map do |big_chunk|
-  lines = big_chunk.split(/\n/).reject(&:empty?)
-  tile_id = lines[0].match(/^Tile (\d+):/)[1]
-  tile = lines.drop(1).map(&:strip)
-
-  [tile_id, tile]
+tiles = big_chunks.flat_map do |big_chunk|
+  Tile.new_from_raw(big_chunk)
 end
 
-tiles = Hash[raw_tiles.each_slice(2).to_a]
-
-def get_column(tile, col_idx)
-  col = tile.map do |row|
-    row.split(//)[col_idx]
+def next_empty(grid)
+  (0...grid.length).each do |y|
+    (0...grid.length).each do |x|
+      return [y, x] if grid[y][x].nil?
+    end
   end
 
-  col.join('')
+  [nil, nil]
 end
 
-unique_edges = Hash.new { 0 }
+def all_variations(tile)
+  rots = rotations(tile)
+  flipped_tile = tile.flip
+  flipped_rots = rotations(flipped_tile)
 
-raw_edges = tiles.flat_map do |tile_id, tile|
-  edges = {}
+  [rots, flipped_rots].flatten
+end
 
-  edges[:top] = tile[0]
-  edges[:top_r] = tile[0].reverse
-  edges[:bottom] = tile[-1]
-  edges[:bottom_r] = tile[-1].reverse
-  edges[:left] = get_column(tile, 0)
-  edges[:left_r] = get_column(tile, 0).reverse
-  edges[:right] = get_column(tile, -1)
-  edges[:right_r] = get_column(tile, -1).reverse
-
-  edges.each_value do |edge|
-    unique_edges[edge] += 1
+def can_place(grid, y, x, t)
+  if x > 0
+    left_side = grid[y][x - 1]
+    return false if t.left != left_side.right
   end
 
-  [tile_id, edges]
+  if y > 0
+    top_side = grid[y - 1][x]
+    return false if t.top != top_side.bottom
+  end
+
+  true
 end
 
-edges = Hash[raw_edges.each_slice(2).to_a]
-
-ue1 = unique_edges.reject { |_, count| count > 1 }
-
-matches = Hash.new { 0 }
-
-ue1.each_key do |edge|
-  edges.each do |tile_id, tile_edges|
-    tile_edges.each_value do |tile_edge|
-      if tile_edge == edge
-        matches[tile_id] += 1
-      end
+def create_grid(size)
+  grid_size = size ** 0.5
+  (0...grid_size).map do
+    (0...grid_size).map do
+      nil
     end
   end
 end
 
-m = matches.select do |_, v|
-  v == 4
-end
+def solve(grid, tiles)
+  return grid if tiles.empty?
 
-res = m.keys.map(&:to_i).inject(1) { |acc, e| acc * e }
+  y, x = next_empty(grid)
 
-puts "#{res}"
+  tiles.each do |next_tile|
+    others = tiles.reject { |tile| tile == next_tile }
 
-connected_edges = {}
+    vars = all_variations(next_tile)
+    vars.each do |tile|
+      next unless can_place(grid, y, x, tile)
 
-edges.map do |tile_id, tile_edges|
-  te = tile_edges.reject do |dir, edge|
-    ue1.member?(edge)
+      grid_copy = grid.map do |row|
+        row.map(&:clone)
+      end
+
+      grid_copy[y][x] = tile
+      solution = solve(grid_copy, others)
+      return solution unless solution.nil?
+    end
   end
 
-  connected_edges[tile_id] = te
+  nil
 end
 
-puts "conn: #{connected_edges}"
+grid = create_grid(tiles.length)
+solved_grid = solve(grid, tiles)
+corners = solved_grid[0][0].id, solved_grid[-1][0].id, solved_grid[0][-1].id, solved_grid[-1][-1].id
+
+part1 = corners.inject(1) { |acc, id| acc * id.to_i }
+puts "part1: #{part1}"
