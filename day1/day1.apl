@@ -1,14 +1,13 @@
-R←combos VALS;val;pos;others
-⍝ a function to solve part 1
-R←⍬
-:For val :In VALS
-    others←VALS~val
-    pos←(others=(2020-val))
-    R←R,pos/others
-:EndFor
+⍝ R←combos VALS;val;pos;others
+⍝ ⍝ a function to solve part 1
+⍝ R←⍬
+⍝ :For val :In VALS
+⍝     others←VALS~val
+⍝     pos←(others=(2020-val))
+⍝     R←R,pos/others
+⍝ :EndFor
 
-R←×/R
-
+⍝ R←×/R
 
 R←combos3 VALS;val;val1;pos;others;others1
 ⍝ a function to solve part 2
@@ -25,11 +24,18 @@ R←⍬
 R←((⍳⍴R)=(R⍳R))/R
 R←×/R
 
-
 ⍝ read the data file
-file←⍎¨⊃⎕nget '/Users/jgibson/Projects/adventofcode2020/day1/input1.txt'1
+data←⍎¨⊃⎕nget '/Users/jgibson/Projects/adventofcode2020/day1/input1.txt'1
 
 ⍝ solve part 1
-combos data
+⎕ML←1           ⍝ without this, these functions won't work
+×/((∊(data∘.{(⍺+⍵)=2020:⍵ ⋄ 0}data))~0)
+
+⍝ fewer parens
+×/(∊(data∘.{(⍺+⍵)=2020:⍵ ⋄ 0}data))~0
+
+⍝ a better version of part 1
+×/(∊(data∘.{⍵×2020=⍺+⍵}data))~0
+
 ⍝ solve part 2
 combos3 data
