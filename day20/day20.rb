@@ -7,6 +7,17 @@ if ARGV.length != 1
   exit(1)
 end
 
+class String
+  def indexes(needle)
+    found = []
+    current_index = -1
+    while current_index = index(needle, current_index + 1)
+      found << current_index
+    end
+    found
+  end
+end
+
 class Tile
   attr_reader :id, :rows, :size
 
@@ -191,6 +202,7 @@ end
 big_picture = make_big_picture(trimmed_grid)
 
 puts big_picture
+puts "\n\n"
 
 sea_monster = [
   '                  # '.gsub(' ', '.'),
@@ -200,15 +212,40 @@ sea_monster = [
 
 def find_monsters(picture, sea_monster)
   first_hits = []
+  lines_to_skip = []
 
   picture_strings = picture.split(/\n/)
 
   (0...picture_strings.length).each do |row_idx|
-    row = picture_strings[row_idx]
-    if row =~ /#{sea_monster[0]}/ &&
-      picture_strings[row_idx + 1] =~ /#{sea_monster[1]}/ &&
-      picture_strings[row_idx + 2] =~ /#{sea_monster[2]}/
+    next if lines_to_skip.member?(row_idx)
+
+    start_indexes = picture_strings[row_idx].indexes(/#{sea_monster[0]}/)
+
+    next if start_indexes.nil?
+
+    start_indexes.each do |start_index|
+      end_index = start_index + sea_monster[0].length
+
+      next if row_idx + 1 >= picture_strings.length
+
+      next_row = picture_strings[row_idx + 1][start_index..end_index]
+      next unless next_row =~ /#{sea_monster[1]}/
+
+      next if row_idx + 2 >= picture_strings.length
+
+      next_row = picture_strings[row_idx + 2][start_index..end_index]
+      next unless next_row =~ /#{sea_monster[2]}/
+
       first_hits << row_idx
+      # lines_to_skip << row_idx + 1
+      # lines_to_skip << row_idx + 2
+
+      puts picture_strings[row_idx][start_index..end_index]
+      puts picture_strings[row_idx + 1][start_index..end_index]
+      puts picture_strings[row_idx + 2][start_index..end_index]
+      puts "\n\n"
+
+      # break
     end
   end
 
@@ -247,10 +284,12 @@ all_hits = all_variants.flat_map do |picture|
   monsters
 end
 
-puts "hits: #{all_hits}"
+hit_set = Set.new(all_hits)
+
+puts "hits: #{hit_set}"
 monster_size = 15
 
 total_hashes = big_picture.split(//).count { |item| item == '#' }
 
 puts "total_hashes: #{total_hashes}"
-puts "part 2: #{total_hashes - (monster_size * all_hits.length)}"
+puts "part 2: #{total_hashes - (monster_size * hit_set.length)}"
