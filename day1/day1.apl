@@ -39,5 +39,8 @@ data←⍎¨⊃⎕nget '/Users/jgibson/Projects/adventofcode2020/day1/input1.txt
 ⍝ a better version of part 1
 ×/(∊(data∘.{⍵×2020=⍺+⍵}data))~0
 
+⍝ a version of part 1 that doesn't require ⎕ML←1 to bet set beforehand
+×/({⎕ML←1⋄∊⍵}(data∘.{⍵×2020=⍺+⍵}data))~0
+
 ⍝ solve part 2
 combos3 data
